@@ -20,6 +20,14 @@ class Distribution:
             ran (tuple): Range of data. Default is None, which set minimum and maximum values from the data.
             M (int): Number of quantile grid points for Wasserstein distance computation.
         """
+        # Check if data is an iterable of lists or arrays
+        try:
+            iter(data)
+            if not all(hasattr(datum, '__iter__') and not isinstance(datum, str) for datum in data):
+                raise ValueError("Data must be an iterable of lists or arrays of glucose values.")
+        except TypeError:
+            raise ValueError("Data must be an iterable of lists or arrays of glucose values.")
+
         if ran is not None:
             assert np.min(np.min(data)) >= ran[0] and np.max(np.max(data)) <= ran[1], (
                 "Data out of range: specify the correct min/max range of measurement levels"
@@ -74,7 +82,8 @@ class Distribution:
     
     def dists_for_Loss1(self, cutoffs, fixed=None, Wdist="W2"):
         """
-        Compute Wasserstein distances between original and amalgamated distributions.
+        Compute q-Wasserstein distances d_W^q between original and amalgamated distributions.
+        q = 1, 2 for W1 and W2 distances, respectively.
 
         Parameters:
             cutoffs (list): Cutoffs for amalgamation.
@@ -120,7 +129,8 @@ class Distribution:
         for i in range(n-1):
             for j in range(i+1, n):
                 if Wdist == "W2":
-                    dist = np.sum((qtiles[i] - qtiles[j])**2) / (self.M + 1)
+                    # Square-root for the actual W2 distance ########### <- this will change many of my results. Test this.
+                    dist = np.sqrt(np.sum((qtiles[i] - qtiles[j])**2) / (self.M + 1))
                 elif Wdist == "W1":
                     dist = np.sum(np.abs(qtiles[i] - qtiles[j])) / (self.M + 1)
                 dist_matrix[i, j] = dist
