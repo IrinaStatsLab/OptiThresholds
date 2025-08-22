@@ -11,7 +11,13 @@ __pycache__/
 __pycache__\
 .vscode/
 *.asv
+images/
 
-# results/simulation/*.pkl
-# results/simulation2/*.pkl
+results/simulation/*.pkl
+results/simulation2/*.pkl
 data/*.csv
+
+ai-ready*
+ai_ready*
+explore_cgm.ipynb
+berg_sense.ipynb
