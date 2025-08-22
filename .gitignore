@@ -12,6 +12,6 @@ __pycache__\
 .vscode/
 *.asv
 
-results/simulation/*.pkl
-results/simulation2/*.pkl
+# results/simulation/*.pkl
+# results/simulation2/*.pkl
 data/*.csv
