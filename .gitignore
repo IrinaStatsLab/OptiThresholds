@@ -14,7 +14,7 @@ __pycache__\
 images/
 
 results/simulation/*.pkl
-results/simulation2/*.pkl
+# results/simulation2/*.pkl
 data/*.csv
 
 ai-ready*
