@@ -179,7 +179,7 @@ def run_de(data_class, loss, K=4, fixed=None, Wdist="W2",
         popsize (int): Population size for the DE algorithm.
         tol (float): Convergence tolerance for DE.
         init (str or None): Initialization method, "custom" or None.
-        polish (bool): Whether to refine the result with local optimization.
+        polish (bool): Whether to refine the result with local optimization. Defaults to False to implement the original DE.
         disp (bool): Display optimization process.
         seed (int or None): Random seed for reproducibility.
         params (dict): Additional parameters for differential_evolution.
