@@ -149,12 +149,13 @@ trad_thresh_nondiabetic = ggplot(nondiabetic_filtered_trad, aes(x = cdf, y = gl)
 nondiabetic_plots = k14_full_nondiabetic + k14_thresh_nondiabetic + trad_thresh_nondiabetic
 
 # Save out plots
-# ggsave("nondiabetic_quantiles.png", nondiabetic_plots, width = 15, height = 4.5, dpi = 400)
-# ggsave("diabetic_quantiles.png", diabetic_plots, width = 15, height = 4.5, dpi = 400)
-
+ggsave("images/nondiabetic_quantiles.jpeg", nondiabetic_plots, width = 15, height = 4.5, dpi = 400)
+ggsave("images/diabetic_quantiles.jpeg", diabetic_plots, width = 15, height = 4.5, dpi = 400)
 
 
 ## Combined data discrimination plots
+nondiabetic_data <- nondiabetic_data %>% select(id, gl)
+diabetic_data <- diabetic_data %>% select(id, gl)
 combined_data = rbind(nondiabetic_data, diabetic_data) %>% 
   # Adjust ids to make diabetic vs. nondiabetic profiles clear
   mutate(id = ifelse(id > 5200, id - 9000, id))
@@ -225,8 +226,8 @@ comb_trad = ggplot(trad_barplot_data, aes(x = index, y = Proportion, fill = Rang
 # Reformat combined data and identify proportion of k = 2 data-driven TIR/TAR/TBR for each profile
 custom_barplot_data = combined_data %>%
   mutate(trad = case_when(
-    gl < 148 ~ "TBR",
-    gl > 256 ~ "TAR",
+    gl < 150 ~ "TBR", # 148
+    gl > 257 ~ "TAR", # 256
     TRUE ~ "TIR"
   )) %>%
   group_by(id) %>%
@@ -262,10 +263,10 @@ comb_l2k2 = ggplot(custom_barplot_data, aes(x = index, y = Proportion, fill = Ra
     "TIR" = "#00796B",        
     "TAR" = "#F1C40F"         
   ),
-  labels = c(">= 256 mg/dL", "149 - 255 mg/dL", "< 149 mg/dL")) +
+  labels = c(">= 258 mg/dL", "150 - 257 mg/dL", "< 150 mg/dL")) +
   geom_vline(xintercept = n_healthy + 0.5, linetype = "dashed", color = "black", size = 1) +
   labs(
-    title = "Data-Driven Thresholds [149, 256]",
+    title = "Data-Driven Thresholds [150, 258]",
     x = "Samples (Left: Non-Diabetic, Right: T1D)",
     y = "Time-in-Range Proportions",
     fill = "Range"
@@ -294,8 +295,8 @@ comb_l2k2 = ggplot(custom_barplot_data, aes(x = index, y = Proportion, fill = Ra
 
 # Save out combined k = 2 plot
 comb_plot = comb_l2k2 + comb_trad
-#ggsave("comb_plot.png", comb_plot, width = 15, height = 7, dpi = 400)
-
+ggsave("images/comb_plot.jpeg", comb_plot, width = 15, height = 7, dpi = 600)
+print(comb_plot)
 
 
 
@@ -379,11 +380,18 @@ comb_trad_4 = ggplot(custom_barplot_data, aes(x = index, y = Proportion, fill = 
 
 # Reformat combined data and identify proportion of k = 4 data-driven TIR/TAR/TBR for each profile
 custom_barplot_data = combined_data %>%
-  mutate(trad = case_when(
-    gl < 128 ~ "TIR_1",
-    gl >= 128 & gl < 193 ~ "TIR_2",
-    gl >= 193 & gl < 247 ~ "TIR_3",
-    gl >= 247 & gl < 312 ~ "TIR_4",
+  # mutate(trad = case_when(
+  #   gl < 128 ~ "TIR_1",
+  #   gl >= 128 & gl < 193 ~ "TIR_2",
+  #   gl >= 193 & gl < 247 ~ "TIR_3",
+  #   gl >= 247 & gl < 312 ~ "TIR_4",
+  #   TRUE ~ "TIR_5"
+  # )) %>%
+  mutate(trad = case_when( #82, 126, 193, 275
+    gl < 82 ~ "TIR_1",
+    gl >= 82 & gl < 126 ~ "TIR_2",
+    gl >= 126 & gl < 193 ~ "TIR_3",
+    gl >= 193 & gl < 275 ~ "TIR_4",
     TRUE ~ "TIR_5"
   )) %>%
   group_by(id) %>%
@@ -423,10 +431,11 @@ comb_l2k2_4 = ggplot(custom_barplot_data, aes(x = index, y = Proportion, fill = 
     "TIR_4" = "#28A57B",
     "TIR_5" = "#F1C40F"
   ),
-  labels = c(">= 312 mg/dL", "247 - 311 mg/dL", "193 - 246 mg/dL", "128 - 192 mg/dL", "< 128 mg/dL")) +
+  # labels = c(">= 312 mg/dL", "247 - 311 mg/dL", "193 - 246 mg/dL", "128 - 192 mg/dL", "< 128 mg/dL")) +
+  labels = c(">= 275 mg/dL", "193 - 274 mg/dL", "126 - 192 mg/dL", "82 - 125 mg/dL", "< 82 mg/dL")) + #82, 126, 193, 275
   geom_vline(xintercept = n_healthy + 0.5, linetype = "dashed", color = "black", size = 1) +
   labs(
-    title = "Data-Driven Thresholds [128, 193, 247, 312]",
+    title = "Data-Driven Thresholds [82, 126, 193, 275]",
     x = "Samples (Left: Non-Diabetic, Right: T1D)",
     y = "Time-in-Range Proportions",
     fill = "Range"
@@ -455,8 +464,8 @@ comb_l2k2_4 = ggplot(custom_barplot_data, aes(x = index, y = Proportion, fill = 
 
 # Save out combined k = 4 plot
 comb_plot_k4 = comb_l2k2_4 + comb_trad_4
-#ggsave("k4_comb_stacked_barplots.png", comb_plot_k4, width = 15, height = 7, dpi = 400)
-
+ggsave("images/k4_comb_stacked_barplots.jpeg", comb_plot_k4, width = 15, height = 7, dpi = 600)
+print(comb_plot_k4)
 
 
 
