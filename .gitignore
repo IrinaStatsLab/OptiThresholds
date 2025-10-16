@@ -16,6 +16,7 @@ images/
 results/simulation/*.pkl
 results/simulation2/*.pkl
 data/*.csv
+RT-CGM*
 
 ai-ready*
 ai_ready*

@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Comparison of linear model fits with TIR compositional predictors based on consensus (CS) and data-driven (DE) thresholds. $\Delta$AIC denotes the difference AIC$_{\text{CS}}$ - AIC$_{\text{DE}}$. DE significantly outperforms CS in all cases, according to Clarke's observation-wise likelihood-ratio test for non-nested model comparison at  $\alpha = 0.05$.}
+\label{tab:lm_results}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{$K=2$} & \multicolumn{3}{c}{$K=4$} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} Response & \multicolumn{1}{c}{$R^2_{\text{DE}}$} & \multicolumn{1}{c}{$R^2_{\text{Trad}}$} & \multicolumn{1}{c}{$\Delta$AIC} & \multicolumn{1}{c}{$R^2_{\text{DE}}$} & \multicolumn{1}{c}{$R^2_{\text{Trad}}$} & \multicolumn{1}{c}{$\Delta$AIC} \\
+\midrule
+HDL-C & 0.018 & 0.011 & 4.2$^\ddagger$ & 0.041 & 0.014 & 16.2$^\ddagger$ \\
+TG & 0.049 & 0.025 & 14.5$^\ddagger$ & 0.052 & 0.040 & 7.5$^*$ \\
+TG/HDL-C & 0.050 & 0.026 & 14.3$^\ddagger$ & 0.060 & 0.040 & 11.8$^\dagger$ \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item $\qquad$ * $p<0.05$, † $p<0.01$, ‡ $p<0.001$
+\end{tablenotes}
+\end{table}
