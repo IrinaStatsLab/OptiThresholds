@@ -3,6 +3,11 @@ library(tidyverse)
 library(scales)
 library(patchwork)
 
+# Make sure that the directory is set to the root of this project
+if (!dir.exists("data")) {
+  setwd("..")
+}
+
 # Read data
 nondiabetic_data = read_csv("data/shah2019_filtered.csv")
 diabetic_data = read_csv("data/brown2019_filtered.csv")
