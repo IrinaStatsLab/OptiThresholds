@@ -1,15 +1,36 @@
+"""AI-READI data-processing helpers used by real-data notebooks."""
+
+from __future__ import annotations
+
 from math import ceil
-import os
-import sys
 from pathlib import Path
+import warnings
+
 import numpy as np
 import pandas as pd
-import warnings
+
 warnings.filterwarnings('ignore')
+
+AI_READI_STUDY_GROUPS = (
+    'healthy',
+    'pre_diabetes_lifestyle_controlled',
+)
+
+RESPONSE_LABELS: dict[str, str] = {
+    'hdl_c': 'HDL-C',
+    'log_triglycerides': 'TG',
+    'AIP': 'TG/HDL-C',
+    'hba1c': 'HbA1c',
+}
+
 
 
 def calculate_tir_metrics(gl_values, thresholds=[70, 181], minmax=[40, 401]):
-    """Calculate Time in Range metrics for given glucose values and thresholds"""
+    """Return compositional TIR proportions for one glucose trajectory.
+
+    Parameters follow the threshold convention used across the real-data
+    notebooks. The returned list sums to one across the induced glucose bins.
+    """
     gl_array = np.array(gl_values)
     total_readings = len(gl_array)
 
@@ -18,127 +39,74 @@ def calculate_tir_metrics(gl_values, thresholds=[70, 181], minmax=[40, 401]):
     tir_list = []
     for i in range(len(extended_thresholds) - 1):
         if extended_thresholds[i] >= extended_thresholds[i + 1]:
-            raise ValueError("Thresholds must be in ascending order.")
+            raise ValueError('Thresholds must be in ascending order.')
         tir = np.sum((gl_array >= extended_thresholds[i]) & (gl_array < extended_thresholds[i + 1])) / total_readings
-        tir_list.append(tir) 
-    
+        tir_list.append(tir)
+
     return tir_list
 
 
 def add_tir_metrics(df, thresholds=[70, 181], minmax=[40, 401]):
-    """Add TIR metrics to the DataFrame"""
+    """Append TIR composition columns to a dataframe containing `gl` lists.
+
+    Typical use is to call this once per threshold set before fitting a linear
+    model on the resulting compositional predictors.
+    """
     tir_metrics = df['gl'].apply(lambda x: calculate_tir_metrics(x, thresholds, minmax))
     extended_thresholds = [minmax[0]] + list(thresholds) + [minmax[1]]
 
-    column_names = [f'TIR_{ceil(extended_thresholds[i])}_{ceil(extended_thresholds[i + 1] - 1)}'
-                     for i in range(len(extended_thresholds) - 1)]
+    column_names = [
+        f'TIR_{ceil(extended_thresholds[i])}_{ceil(extended_thresholds[i + 1] - 1)}'
+        for i in range(len(extended_thresholds) - 1)
+    ]
 
     tir_metrics_df = tir_metrics.apply(lambda x: pd.Series(x))
     tir_metrics_df.columns = column_names
-    df = pd.concat([df, tir_metrics_df], axis=1)
-    
-    return df
+    return pd.concat([df, tir_metrics_df], axis=1)
 
+def load_ai_readi_cohort(repo_root: Path | str) -> pd.DataFrame:
+    """Load the subject-level AI-READI cohort used by comparison notebooks.
 
-def setup_r_environment():
+    The function aggregates glucose trajectories by subject, merges metadata,
+    applies the fixed study-group and HbA1c filters, and creates the transformed
+    lipid outcomes used by the prediction notebooks.
     """
-    Setup R environment with automatic path detection.
-    
-    This function attempts to locate R installation automatically and
-    sets up the necessary environment variables for rpy2 to work.
-    
-    Raises:
-        RuntimeError: If R installation cannot be found
-    """
-    if 'R_HOME' not in os.environ:
-        # Try common R installation paths on Windows
-        possible_paths = [
-            r'C:\Program Files\R\R-4.4.1',
-            r'C:\Program Files\R\R-4.4.0',
-            r'C:\Program Files\R\R-4.3.3',
-            r'C:\Program Files\R\R-4.3.2', 
-            r'C:\Program Files\R\R-4.3.1',
-            r'C:\Program Files\R\R-4.3.0',
-            r'C:\Program Files\R\R-4.2.3',
-            r'C:\Program Files\R\R-4.2.2',
-            r'C:\Program Files\R\R-4.2.1',
-            r'C:\Program Files\R\R-4.2.0',
-            r'C:\Program Files\R\R-4.1.3',
-            # Alternative installation paths
-            r'C:\Program Files (x86)\R\R-4.4.1',
-            r'C:\Program Files (x86)\R\R-4.3.3',
-            r'C:\Users\%USERNAME%\Documents\R\R-4.4.1',
-            # Unix/Linux paths (in case this runs on other systems)
-            '/usr/lib/R',
-            '/usr/local/lib/R',
-            '/opt/R',
-        ]
-        
-        r_home = None
-        for path in possible_paths:
-            # Expand environment variables like %USERNAME%
-            expanded_path = os.path.expandvars(path)
-            if Path(expanded_path).exists():
-                r_home = expanded_path
-                break
-        
-        if r_home is None:
-            raise RuntimeError(
-                "R installation not found. Please either:\n"
-                "1. Install R from https://cran.r-project.org/\n" 
-                "2. Set R_HOME environment variable manually\n"
-                "3. Add R to your system PATH\n\n"
-                f"Searched in the following locations:\n" + 
-                "\n".join([f"  - {os.path.expandvars(p)}" for p in possible_paths])
-            )
-        
-        os.environ['R_HOME'] = r_home
-        
-        # Set up PATH for R binaries
-        if sys.platform.startswith('win'):
-            bin_path = Path(r_home) / 'bin' / 'x64'
-        else:
-            bin_path = Path(r_home) / 'bin'
-            
-        if bin_path.exists():
-            os.environ['PATH'] += os.pathsep + str(bin_path)
-        
-        print(f"Using R installation at: {r_home}")
-    else:
-        print(f"Using existing R_HOME: {os.environ['R_HOME']}")
+    repo_root = Path(repo_root)
+    data_dir = repo_root / 'data'
+
+    data = pd.read_csv(data_dir / 'ai-ready.csv')
+    grouped_data = data.groupby('id', as_index=False).agg({'gl': list})
+
+    metadata = pd.read_csv(data_dir / '2025-10-06_metadata.csv')
+    metadata = metadata.rename(
+        columns={
+            'participant_id': 'id',
+            'HbA1c (%)': 'hba1c',
+            'Triglycerides (mg/dL)': 'triglycerides',
+            'HDL Cholesterol (mg/dL)': 'hdl_c',
+            'Total Cholesterol (mg/dL)': 'total_c',
+            'LDL Cholesterol Calculation (mg/dL)': 'ldl_c',
+        }
+    )
+    metadata = metadata[
+        ['id', 'age', 'study_group', 'ldl_c', 'hdl_c', 'total_c', 'triglycerides', 'hba1c']
+    ]
+
+    cohort = grouped_data.merge(metadata, on='id', how='inner')
+    cohort = cohort.loc[cohort['study_group'].isin(AI_READI_STUDY_GROUPS)].copy()
+
+    cohort['log_triglycerides'] = np.nan
+    positive_triglycerides = cohort['triglycerides'] > 0
+    cohort.loc[positive_triglycerides, 'log_triglycerides'] = np.log(
+        cohort.loc[positive_triglycerides, 'triglycerides']
+    )
+    cohort['AIP'] = cohort['log_triglycerides'] - np.log(cohort['hdl_c'])
+
+    cohort = cohort.dropna().copy()
+    cohort = cohort.loc[cohort['hba1c'].between(2.5, 8, inclusive='left')].copy()
+    return cohort.reset_index(drop=True)
 
 
-def clarke_test(df, response, model_a_vars, model_b_vars, digits=3):
-    """
-    Performs Clarke test to compare two non-nested models.
-    """
-    from rpy2.robjects import pandas2ri
-    from rpy2.robjects.packages import importr
-    from rpy2.robjects import Formula
-
-    clarke = importr('clarkeTest')
-    stats = importr('stats')
-
-    # Activate automatic conversion between pandas and R data frames
-    pandas2ri.activate()
-
-    # Convert DataFrame to R data frame
-    r_df = pandas2ri.py2rpy(df)
-
-    # Create formulas for the two models
-    formula_a = Formula(f"{response} ~ " + " + ".join(model_a_vars))
-    formula_b = Formula(f"{response} ~ " + " + ".join(model_b_vars))
-
-    # Fit the two models using R's lm function
-    model_a = stats.lm(formula_a, data=r_df)
-    model_b = stats.lm(formula_b, data=r_df)
-
-    # Perform Clarke test using clarke::clarke_test
-    clarke_result = clarke.clarke_test(model_a, model_b, digits=digits)
-
-    from scipy.stats import binomtest
-    statistic = clarke_result.rx2('stat')[0]
-    n = clarke_result.rx2('nobs')[0]
-    p_value = binomtest(statistic, n=n, p=0.5, alternative='two-sided').pvalue
-
-    return statistic, p_value 
+def format_response_name(response: str) -> str:
+    """Map an internal response name to the label used in notebook tables."""
+    return RESPONSE_LABELS.get(response, response)

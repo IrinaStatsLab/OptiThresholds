@@ -164,7 +164,7 @@ def fitness(cutoffs, data_class, loss, fixed=None, Wdist="W2"):
     
 
 def run_de(data_class, loss, K=4, fixed=None, Wdist="W2",
-            maxiter=1000, popsize=15, tol=1e-5, init=None, polish=False,
+            maxiter=1000, popsize=15, tol=1e-5, polish=False,
             disp=False, seed=None, **params):
     """
     Run the differential evolution (DE) algorithm for optimizing cutoffs.
@@ -178,7 +178,6 @@ def run_de(data_class, loss, K=4, fixed=None, Wdist="W2",
         maxiter (int): Maximum number of iterations.
         popsize (int): Population size for the DE algorithm.
         tol (float): Convergence tolerance for DE.
-        init (str or None): Initialization method, "custom" or None.
         polish (bool): Whether to refine the result with local optimization. Defaults to False to implement the original DE.
         disp (bool): Display optimization process.
         seed (int or None): Random seed for reproducibility.

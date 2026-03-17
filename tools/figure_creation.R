@@ -154,9 +154,10 @@ trad_thresh_nondiabetic = ggplot(nondiabetic_filtered_trad, aes(x = cdf, y = gl)
 nondiabetic_plots = k14_full_nondiabetic + k14_thresh_nondiabetic + trad_thresh_nondiabetic
 
 # Save out plots
-ggsave("images/nondiabetic_quantiles.jpeg", nondiabetic_plots, width = 15, height = 4.5, dpi = 400)
-ggsave("images/diabetic_quantiles.jpeg", diabetic_plots, width = 15, height = 4.5, dpi = 400)
-
+# ggsave("images/nondiabetic_quantiles.jpeg", nondiabetic_plots, width = 15, height = 4.5, dpi = 400)
+# ggsave("images/diabetic_quantiles.jpeg", diabetic_plots, width = 15, height = 4.5, dpi = 400)
+ggsave("images_sim/nondiabetic_quantiles.tiff", nondiabetic_plots, width = 15, height = 4.5, dpi = 800)
+ggsave("images_sim/diabetic_quantiles.tiff", diabetic_plots, width = 15, height = 4.5, dpi = 800)
 
 ## Combined data discrimination plots
 nondiabetic_data <- nondiabetic_data %>% select(id, gl)
@@ -300,7 +301,8 @@ comb_l2k2 = ggplot(custom_barplot_data, aes(x = index, y = Proportion, fill = Ra
 
 # Save out combined k = 2 plot
 comb_plot = comb_l2k2 + comb_trad
-ggsave("images/comb_plot.jpeg", comb_plot, width = 15, height = 7, dpi = 600)
+# ggsave("images/comb_plot.jpeg", comb_plot, width = 15, height = 7, dpi = 600)
+ggsave("images_sim/comb_plot.tiff", comb_plot, width = 15, height = 6, dpi = 800)
 print(comb_plot)
 
 
@@ -469,7 +471,8 @@ comb_l2k2_4 = ggplot(custom_barplot_data, aes(x = index, y = Proportion, fill = 
 
 # Save out combined k = 4 plot
 comb_plot_k4 = comb_l2k2_4 + comb_trad_4
-ggsave("images/k4_comb_stacked_barplots.jpeg", comb_plot_k4, width = 15, height = 7, dpi = 600)
+# ggsave("images/k4_comb_stacked_barplots.jpeg", comb_plot_k4, width = 15, height = 7, dpi = 600)
+ggsave("images_sim/k4_comb_stacked_barplots.tiff", comb_plot_k4, width = 15, height = 6, dpi = 800)
 print(comb_plot_k4)
 
 

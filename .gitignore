@@ -11,7 +11,8 @@ __pycache__/
 __pycache__\
 .vscode/
 *.asv
-images/
+images*
+archive*
 
 results/simulation/*.pkl
 results/simulation2/*.pkl
@@ -22,3 +23,5 @@ ai-ready*
 ai_ready*
 explore_cgm.ipynb
 berg_sense.ipynb
+
+Code and Data DDA*
