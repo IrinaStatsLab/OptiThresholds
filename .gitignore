@@ -25,3 +25,5 @@ explore_cgm.ipynb
 berg_sense.ipynb
 
 Code and Data DDA*
+slurm/*
+logs/*
