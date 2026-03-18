@@ -1,7 +1,5 @@
 import numpy as np
 
-from scipy.stats import ecdf
-from scipy.interpolate import interp1d
 from scipy.optimize import LinearConstraint, differential_evolution
 
 
@@ -36,21 +34,26 @@ class Distribution:
             ran = [np.min(np.min(data)) - 1e-8, np.max(np.max(data)) + 1e-8]
         
         self.ran = ran
-        self.data = [np.array(datum) for datum in data]
+        self.data = [np.asarray(datum, dtype=float) for datum in data]
+        # Pre-sort each subject once so later ECDF/quantile evaluations can reuse the same order statistics.
+        self.sorted_data = [np.sort(datum) for datum in self.data]
+        # Store the rank grid once because NumPy's default linear quantile rule interpolates over these indices.
+        self.sorted_index = [np.arange(len(datum), dtype=float) for datum in self.sorted_data]
+        # Store sample sizes once so empirical CDF values and quantile ranks do not recompute lengths repeatedly.
+        self.sample_sizes = np.array([len(datum) for datum in self.sorted_data], dtype=int)
         self.M = M
         self.gr = np.linspace(0, 1, M+2)    # Grid for quantiles
         
-        # Get quantile functions and empirical CDFs for each subject
+        # Compute the baseline subject quantiles once from the pre-sorted samples.
         self.qtiles = self.compute_quantiles()
-        self.F_list = self.get_ecdfs()
 
     def compute_quantiles(self):
         """Compute quantiles for each subject's data."""
-        return [np.quantile(data, self.gr) for data in self.data]
-    
-    def get_ecdfs(self):
-        """ Get the empirical CDF callables of the CGM measurements"""
-        return [ecdf(data).cdf.evaluate for data in self.data]
+        qtiles = np.empty((len(self.data), self.M + 2), dtype=float)
+        for i in range(len(self.data)):
+            # Interpolating on the sorted sample reproduces np.quantile(..., method="linear") without sorting again.
+            qtiles[i] = np.interp((self.sample_sizes[i] - 1) * self.gr, self.sorted_index[i], self.sorted_data[i])
+        return qtiles
 
     def cutoff_amalgamation(self, cutoffs, fixed=None):
         """
@@ -64,21 +67,27 @@ class Distribution:
         Returns:
             list: Amalgamated quantiles.
         """
+        # Normalize external cutoff inputs once so the rest of the method can assume a numeric ndarray.
+        cutoffs = np.asarray(cutoffs, dtype=float)
         if fixed is not None:
             assert np.min(fixed) >= self.ran[0] and np.max(fixed) <= self.ran[1], "Fixed thresholds out of range"
             cutoffs = np.sort(np.r_[fixed, cutoffs])    # Sort is required for the correct interpolation
 
-        q_a_list = list()
+        # Store the amalgamated quantiles in one dense array because every subject is evaluated on the same grid self.gr.
+        q_a = np.empty((len(self.data), self.M + 2), dtype=float)
         for i in range(len(self.data)):
-            knots = np.unique(np.concatenate([[0], self.F_list[i](cutoffs), [1]]))  # endpoints for ecdf 0, 1 values
-            q_knots = np.quantile(self.data[i], knots)
-            interp_func = interp1d(knots, q_knots, kind='linear', fill_value=(np.min(self.data[i]), np.max(self.data[i])))
-            
-            # Amalgamated quantiles
-            q_a_list.append(interp_func(self.gr)) 
+            # (searchsorted(..., side="right") / n) matches the empirical CDF P(X <= cutoff)
+            cdf_vals = np.searchsorted(self.sorted_data[i], cutoffs, side="right") / self.sample_sizes[i]
+            knots = np.unique(np.concatenate([[0], cdf_vals, [1]]))  # endpoints for ecdf 0, 1 values
+            # (n-1)*p are the rank locations behind NumPy's default linear quantile convention.
+            rank_knots = (self.sample_sizes[i] - 1) * knots
+            # Interpolating on the sorted sample reproduces np.quantile(..., method="linear") without re-sorting.
+            q_knots = np.interp(rank_knots, self.sorted_index[i], self.sorted_data[i])
+            # np.interp gives the linear piecewise quantile curve, without building a callable object.
+            q_a[i] = np.interp(self.gr, knots, q_knots)
         
-        self.q_a = q_a_list
-        return q_a_list
+        self.q_a = q_a
+        return q_a
     
     def dists_for_Loss1(self, cutoffs, fixed=None, Wdist="W2"):
         """
@@ -94,16 +103,16 @@ class Distribution:
             np.ndarray: List of distances.
         """
         # Compute the quantiles of the amalgamation given cutoffs
-        self.cutoff_amalgamation(cutoffs, fixed)
+        q_a = self.cutoff_amalgamation(cutoffs, fixed)
+        qtiles = self.qtiles
 
-        n = len(self.data)
-        distances = np.zeros(n)
-        for i in range(n):
-            if Wdist == "W2":
-                distances[i] = np.sum((self.qtiles[i] - self.q_a[i]) ** 2) / (self.M + 1)
-            elif Wdist == "W1":
-                distances[i] = np.sum(np.abs(self.qtiles[i] - self.q_a[i])) / (self.M + 1)
-        return distances
+        if Wdist == "W2":
+            # Summing rowwise squared differences reproduces the original per-subject W2 aggregation.
+            return np.sum((qtiles - q_a) ** 2, axis=1) / (self.M + 1)
+        elif Wdist == "W1":
+            # Summing rowwise absolute differences reproduces the original per-subject W1 aggregation.
+            return np.sum(np.abs(qtiles - q_a), axis=1) / (self.M + 1)
+        raise ValueError("Invalid Wdist specified")
     
     def Wdist_matrix(self, cutoffs=None, fixed=None, change=True, Wdist="W2"):
         """
@@ -118,23 +127,28 @@ class Distribution:
         Returns:
             np.ndarray: Distance matrix.
         """
-        n = len(self.data)
-        dist_matrix = np.zeros((n, n))
+        # Use one dense 2D array for vectorized operations of pairwise distance
         qtiles = self.qtiles
 
         if cutoffs is not None:
-            self.cutoff_amalgamation(cutoffs, fixed)
-            qtiles = self.q_a
-        
-        for i in range(n-1):
-            for j in range(i+1, n):
-                if Wdist == "W2":
-                    # Square-root for the actual W2 distance ########### <- this will change many of my results. Test this.
-                    dist = np.sqrt(np.sum((qtiles[i] - qtiles[j])**2) / (self.M + 1))
-                elif Wdist == "W1":
-                    dist = np.sum(np.abs(qtiles[i] - qtiles[j])) / (self.M + 1)
-                dist_matrix[i, j] = dist
-        
+            # This is the same amalgamated quantile data as before, just converted once to an ndarray.
+            qtiles = self.cutoff_amalgamation(cutoffs, fixed)
+
+        if Wdist == "W2":
+            # For rows qi and qj, ||qi-qj||^2 = ||qi||^2 + ||qj||^2 - 2<qi,qj>.
+            sq_norms = np.sum(qtiles * qtiles, axis=1, keepdims=True)
+            dist_sq = (sq_norms + sq_norms.T - 2.0 * (qtiles @ qtiles.T)) / (self.M + 1)
+            # Squared distances should be nonnegative, but roundoff can make values near 0 slightly negative.
+            dist_matrix = np.sqrt(np.maximum(dist_sq, 0.0))
+        elif Wdist == "W1":
+            # Broadcasting forms every row difference qi-qj at once, then averages absolute deviations as before.
+            dist_matrix = np.sum(np.abs(qtiles[:, None, :] - qtiles[None, :, :]), axis=2) / (self.M + 1)
+        else:
+            raise ValueError("Invalid Wdist specified")
+
+        # Loss2 expects each unordered pair only once, so keep the strict upper triangle and zero everything else.
+        dist_matrix = np.triu(dist_matrix, k=1)
+
         if cutoffs is None:
             self.dist_matrix = dist_matrix
         elif change:
@@ -160,6 +174,7 @@ def fitness(cutoffs, data_class, loss, fixed=None, Wdist="W2"):
         mat_orig = data_class.dist_matrix    # computed only once
         mat_amalg = data_class.Wdist_matrix(cutoffs, fixed=fixed, Wdist=Wdist)
         n = mat_orig.shape[0] 
+        # dist_matrix stores only i<j entries, so multiply by 2/(n(n-1)) to average over unordered pairs.
         return np.sum((mat_orig - mat_amalg) ** 2) * 2 / n / (n - 1)
     
 
@@ -418,3 +433,5 @@ def BC_criterion(compo_matrix, l):
             val += (min(compo_matrix[i, l], compo_matrix[j, l]) + min(compo_matrix[i, l+1], compo_matrix[j, l+1]) - 
                     min(compo_matrix[i, l] + compo_matrix[i, l+1], compo_matrix[j, l] + compo_matrix[j, l+1])) ** 2
     return val
+
+
