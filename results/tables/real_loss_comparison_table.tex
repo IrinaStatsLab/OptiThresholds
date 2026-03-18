@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{Comparison with consensus and pooled-quantile naive thresholds for the manuscript's main real-data experiments. Healthy and T1D rows report $L_1$ because those analyses use the $L_1$ criterion, whereas Combined and AI-READI rows report $L_2$. Within each dataset, the smallest value inside each comparable $K$ block is shown in bold. The $K=9$ block reports the reviewer-requested naive decile baseline only.}
+\label{tab:real_loss_comparison}
+\small
+\begin{tabular}{llrrrrrrr}
+\toprule
+ & & \multicolumn{3}{c}{$K=2$} & \multicolumn{3}{c}{$K=4$} & \multicolumn{1}{c}{$K=9$} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8} \cmidrule(lr){9-9}
+Dataset & Loss & DE & Consensus & Naive & DE & Consensus & Naive & Naive \\
+\midrule
+Healthy & $L_1$ & \textbf{88.9} & 656.9 & 371.4 & \textbf{16.6} & 655.9 & 183.3 & 69.0 \\
+\midrule
+T1D & $L_1$ & \textbf{398.2} & 1236.0 & 1518.7 & \textbf{41.2} & 159.9 & 615.7 & 157.0 \\
+\midrule
+Combined & $L_2$ & \textbf{22.2} & 111.6 & 577.3 & \textbf{4.9} & 144.2 & 244.7 & 51.0 \\
+\midrule
+AI-READI & $L_2$ & \textbf{45.5} & 103.4 & 454.2 & \textbf{5.5} & 121.1 & 289.0 & 116.7 \\
+\bottomrule
+\end{tabular}
+\end{table}

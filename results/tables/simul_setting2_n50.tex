@@ -1,0 +1,29 @@
+\begin{table}[t!]
+    \centering
+    \caption{Simulation results for Setting 2 with $n=50$ empirical distributions and $K=3$ for $L_1$ loss and $K=2$ for $L_2$ loss and PAA. Thresholds and achieved loss values are averaged over 100 repetitions, with standard errors in parentheses. Oracle thresholds are $(70, 180, 250)$ for $L_1$ and $(70, 180)$ for $L_2$. Bold highlights the lowest loss values for each loss function.}
+    \label{tab: setting2_n50}
+    \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{cccccccccccc}
+    \toprule
+      & & \multicolumn{4}{c}{$L_1$, $K=3$} & \multicolumn{4}{c}{$L_2$, $K=2$} & \multirow{2.4}{*}{PAA, $K=2$}\\
+    \cmidrule(lr){3-6} \cmidrule(lr){7-10}
+      Noise &  & Oracle & DE & SA & SS & Oracle & DE & SA & SS & \\
+    \midrule
+        \multirow{4}{*}{$\nu=0$} & $t_1$ & 70 & 70.2 (0.0) & 70.0 (0.0) & 68.3 (0.1) & 70 & 77.3 (0.7) & 70.0 (0.0) & 129.4 (0.8) & 70.0 (0.0) \\
+          & $t_2$ & 180 & 179.9 (0.1) & 180.2 (0.1) & 226.8 (0.6) & 180 & 197.2 (2.1) & 179.1 (1.2) & 313.5 (13.6) & 183.8 (1.2) \\
+          & $t_3$ & 250 & 250.7 (0.1) & 250.1 (0.0) & 252.3 (0.2) & -- & -- & -- & -- & -- \\
+          & Loss  & 6.59 (.06) & \textbf{6.42 (.06)} & 6.62 (.06) & 39.4 (0.7) & 3.03 (.05) & \textbf{2.54 (.04)} & 4.27 (.41) & 10.7 (0.1) & -- \\
+        \midrule
+        \multirow{4}{*}{$\nu=5$} & $t_1$ & 70 & 74.4 (0.2) & 77.5 (0.4) & 74.4 (0.2) & 70 & 78.8 (0.4) & 77.0 (0.4) & 129.2 (0.2) & 63.7 (0.4) \\
+          & $t_2$ & 180 & 178.4 (0.2) & 179.4 (0.5) & 226.0 (1.0) & 180 & 201.8 (1.0) & 178.8 (1.4) & 274.4 (15.6) & 84.1 (2.5) \\
+          & $t_3$ & 250 & 253.6 (0.1) & 254.6 (0.4) & 256.2 (0.4) & -- & -- & -- & -- & -- \\
+          & Loss  & 19.9 (0.4) & \textbf{12.2 (0.2)} & 17.2 (0.5) & 48.2 (0.9) & 10.6 (0.3) & \textbf{4.26 (.06)} & 8.49 (.35) & 14.4 (0.2) & -- \\
+        \midrule
+        \multirow{4}{*}{$\nu=10$} & $t_1$ & 70 & 76.2 (0.2) & 80.2 (0.7) & 77.1 (0.2) & 70 & 79.9 (0.3) & 80.0 (0.7) & 127.3 (0.2) & 56.4 (0.6) \\
+          & $t_2$ & 180 & 175.3 (0.3) & 173.9 (0.9) & 225.1 (1.1) & 180 & 203.8 (0.7) & 175.6 (1.8) & 162.8 (15.5) & 80.9 (0.6) \\
+          & $t_3$ & 250 & 255.4 (0.2) & 258.0 (0.8) & 261.2 (0.4) & -- & -- & -- & -- & -- \\
+          & Loss  & 38.9 (0.7) & \textbf{25.4 (0.4)} & 40.8 (1.1) & 65.4 (1.2) & 20.0 (0.4) & \textbf{9.61 (.18)} & 19.9 (0.5) & 26.8 (0.4) & -- \\
+    \bottomrule
+    \end{tabular}
+    }
+\end{table}
