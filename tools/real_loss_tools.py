@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 
 from method import Distribution, fitness
-from tools.ai_readi_tools import load_ai_readi_cohort
+from tools.downstream_tools import pooled_quantile_thresholds
+from tools.processing_aireadi import load_ai_readi_cohort
 
 __all__ = [
     "CONSENSUS_THRESHOLD_SETS",
@@ -122,15 +123,6 @@ def load_real_loss_datasets(repo_root: Path | str) -> dict[str, RealLossDataset]
     }
 
 
-def pooled_quantile_thresholds(glucose_lists: list[np.ndarray], threshold_count: int) -> tuple[np.ndarray, np.ndarray]:
-    pooled = np.concatenate([np.asarray(values, dtype=float) for values in glucose_lists])
-    probs = np.arange(1, threshold_count + 1, dtype=float) / (threshold_count + 1)
-    cutoffs = np.quantile(pooled, probs)
-    if np.any(np.diff(cutoffs) <= 0):
-        raise ValueError(f"Naive thresholds for K={threshold_count} are not strictly increasing: {cutoffs}")
-    return probs, cutoffs
-
-
 def _format_threshold_value(value: float) -> str:
     rounded = int(round(float(value)))
     if np.isclose(value, rounded, atol=1e-8):
@@ -225,7 +217,6 @@ def style_loss_comparison_table(loss_wide_df: pd.DataFrame):
         loss_wide_df.style
         .format("{:.1f}")
         .apply(apply_styles, axis=None)
-        .set_caption("Healthy and T1D rows report L1; Combined and AI-READI rows report L2. Bold values are the smallest losses within each dataset and comparable K block.")
     )
 
 

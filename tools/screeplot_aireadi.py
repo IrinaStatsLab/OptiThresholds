@@ -21,7 +21,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from method import Distribution, run_de
-from tools.ai_readi_tools import load_ai_readi_cohort
+from tools.processing_aireadi import load_ai_readi_cohort
 
 SEED = 20241225
 LOSS = "Loss2"

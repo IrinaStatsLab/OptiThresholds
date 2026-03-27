@@ -8,6 +8,7 @@ logic should stay in the workflow modules that use these helpers.
 """
 
 import json
+import locale
 import os
 import shutil
 import subprocess
@@ -16,6 +17,9 @@ from pathlib import Path
 from typing import Iterable
 
 __all__ = ["setup_r_environment", "ensure_r_packages", "load_rpy2", "r_literal"]
+
+
+_RPY2_CALLBACKS_PATCHED = False
 
 
 def setup_r_environment() -> None:
@@ -157,6 +161,38 @@ def load_rpy2():
     import rpy2.robjects as ro
     from rpy2.robjects import default_converter, numpy2ri
     from rpy2.robjects.conversion import localconverter
+    from rpy2.rinterface_lib import callbacks, conversion, openrlib
+
+    global _RPY2_CALLBACKS_PATCHED
+    if sys.platform.startswith('win') and not _RPY2_CALLBACKS_PATCHED:
+        preferred_encoding = locale.getpreferredencoding(False) or 'utf-8'
+
+        def _decode_console_bytes(cdata, maxlen=None, encoding=None):
+            raw = openrlib.ffi.string(cdata) if maxlen is None else openrlib.ffi.string(cdata, maxlen)
+            candidate_encodings = (
+                encoding,
+                preferred_encoding,
+                'utf-8',
+                'cp949',
+                'cp1252',
+            )
+            for candidate in candidate_encodings:
+                if not candidate:
+                    continue
+                try:
+                    return raw.decode(candidate)
+                except UnicodeDecodeError:
+                    continue
+            return raw.decode(preferred_encoding, errors='replace')
+
+        # rpy2's Windows console callback can attempt UTF-8 on locale-encoded R output.
+        conversion._cchar_to_str = lambda c, encoding=None: _decode_console_bytes(c, encoding=encoding)
+        conversion._cchar_to_str_with_maxlen = (
+            lambda c, maxlen, encoding=None: _decode_console_bytes(c, maxlen=maxlen, encoding=encoding)
+        )
+        if hasattr(callbacks, '_CCHAR_ENCODING'):
+            callbacks._CCHAR_ENCODING = preferred_encoding
+        _RPY2_CALLBACKS_PATCHED = True
 
     return ro, default_converter, numpy2ri, localconverter
 

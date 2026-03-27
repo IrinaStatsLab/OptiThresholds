@@ -1,6 +1,7 @@
 import numpy as np
 
 from scipy.optimize import LinearConstraint, differential_evolution
+from scipy.spatial.distance import pdist, squareform
 
 
 class Distribution:
@@ -26,18 +27,21 @@ class Distribution:
         except TypeError:
             raise ValueError("Data must be an iterable of lists or arrays of glucose values.")
 
+        self.data = [np.asarray(datum, dtype=float) for datum in data]
+        data_min = min(np.min(datum) for datum in self.data)
+        data_max = max(np.max(datum) for datum in self.data)
+
         if ran is not None:
-            assert np.min(np.min(data)) >= ran[0] and np.max(np.max(data)) <= ran[1], (
+            assert data_min >= ran[0] and data_max <= ran[1], (
                 "Data out of range: specify the correct min/max range of measurement levels"
             )
         else:
-            ran = [np.min(np.min(data)) - 1e-8, np.max(np.max(data)) + 1e-8]
-        
+            ran = [data_min - 1e-8, data_max + 1e-8]
+
         self.ran = ran
-        self.data = [np.asarray(datum, dtype=float) for datum in data]
         # Pre-sort each subject once so later ECDF/quantile evaluations can reuse the same order statistics.
         self.sorted_data = [np.sort(datum) for datum in self.data]
-        # Store the rank grid once because NumPy's default linear quantile rule interpolates over these indices.
+        # Store the range grid once to avoid memory re-allocation in np.interp
         self.sorted_index = [np.arange(len(datum), dtype=float) for datum in self.sorted_data]
         # Store sample sizes once so empirical CDF values and quantile ranks do not recompute lengths repeatedly.
         self.sample_sizes = np.array([len(datum) for datum in self.sorted_data], dtype=int)
@@ -136,13 +140,14 @@ class Distribution:
 
         if Wdist == "W2":
             # For rows qi and qj, ||qi-qj||^2 = ||qi||^2 + ||qj||^2 - 2<qi,qj>.
+            # This can be computed efficiently with matrix operations and broadcasting
             sq_norms = np.sum(qtiles * qtiles, axis=1, keepdims=True)
             dist_sq = (sq_norms + sq_norms.T - 2.0 * (qtiles @ qtiles.T)) / (self.M + 1)
-            # Squared distances should be nonnegative, but roundoff can make values near 0 slightly negative.
+            # for numerical stability
             dist_matrix = np.sqrt(np.maximum(dist_sq, 0.0))
         elif Wdist == "W1":
-            # Broadcasting forms every row difference qi-qj at once, then averages absolute deviations as before.
-            dist_matrix = np.sum(np.abs(qtiles[:, None, :] - qtiles[None, :, :]), axis=2) / (self.M + 1)
+            # cityblock is the l1 / Manhattan distance.
+            dist_matrix = squareform(pdist(qtiles, metric="cityblock")) / (self.M + 1)
         else:
             raise ValueError("Invalid Wdist specified")
 
