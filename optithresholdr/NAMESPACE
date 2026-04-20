@@ -1,0 +1,7 @@
+useDynLib(optithresholdr, .registration = TRUE)
+importFrom(Rcpp,evalCpp)
+S3method(print,optithreshold_distribution)
+S3method(print,optithreshold_fit)
+export(as_distribution)
+export(evaluate_loss)
+export(optimal_thresholds)

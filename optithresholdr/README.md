@@ -1,0 +1,51 @@
+# optithresholdr
+
+[![R-CMD-check](https://github.com/pjywang/OptiThresholds/actions/workflows/optithresholdr-check.yaml/badge.svg)](https://github.com/pjywang/OptiThresholds/actions/workflows/optithresholdr-check.yaml)
+
+`optithresholdr` estimates data-driven thresholds for time-in-range summaries
+of repeated wearable measurements. The main use case is clinical or
+observational studies where each participant contributes many measurements, such
+as CGM readings, and the goal is to turn those measurements into interpretable
+time below, within, and above threshold summaries without relying only on
+conventional fixed cutoffs.
+
+More specifically, the package chooses thresholds so that the resulting
+time-in-range summaries optimally preserve distributional information from the
+original repeated measurements.
+
+The methodology is described in:
+
+- Junyoung Park, Neo Kok, and Irina Gaynanova. [Beyond fixed thresholds:
+  optimizing summaries of wearable device data via piecewise linearization of
+  quantile functions](https://arxiv.org/abs/2501.11777).
+
+## Installation
+
+```r
+install.packages("remotes")
+remotes::install_github(
+  "IrinaStatsLab/OptiThresholds",
+  subdir = "optithresholdr",
+  build_vignettes = TRUE
+)
+```
+
+## Getting Started
+
+For a worked introduction to the package workflow, including data preparation,
+loss evaluation, cutoff estimation, and fixed-threshold examples, see:
+
+```r
+vignette("getting-started", package = "optithresholdr")
+```
+
+After installation you can also browse all package vignettes with:
+
+```r
+browseVignettes("optithresholdr")
+```
+
+## Acknowledgements
+
+We thank Farhad De Sousa for providing the initial code structures that greatly accelerated the
+development of this package.

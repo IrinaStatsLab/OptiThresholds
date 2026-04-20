@@ -1,0 +1,36 @@
+Package: optithresholdr
+Title: Data-Driven Thresholds for Wearable Time-in-Range Summaries
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Junyoung", "Park", email = "junyoup@umich.edu", role = c("aut", "cre")),
+    person("Neo", "Kok", email = "irinagn@umich.edu", role = "aut"),
+    person("Irina", "Gaynanova", email = "irinagn@umich.edu", role = "aut"),
+    person("Farhad", "De Sousa", email = "fdesousa@usc.edu", role = "ctb"))
+Author: Junyoung Park [aut, cre], Neo Kok [aut], Irina Gaynanova [aut], Farhad De Sousa [ctb]
+Maintainer: Junyoung Park <junyoup@umich.edu>
+Description: Implements mathematically grounded threshold selection for
+    time-in-range summaries of repeated wearable measurements such as
+    continuous glucose monitor data. The package uses the full measurement
+    profiles across subjects to estimate cutoffs that optimally preserve
+    distributional information in the resulting summaries, using
+    Wasserstein-based loss functions and differential evolution.
+License: file LICENSE
+URL: https://github.com/pjywang/OptiThresholds
+BugReports: https://github.com/pjywang/OptiThresholds/issues
+Depends:
+    R (>= 4.2.0)
+Imports:
+    DEoptim,
+    Rcpp
+LinkingTo:
+    Rcpp
+Suggests:
+    iglu,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: false
+RoxygenNote: 7.3.2
