@@ -27,7 +27,7 @@ initial contribution to the development of this package.
 install.packages("devtools")
 devtools::install_github(
   "pjywang/OptiThresholds",
-  subdir = "OptiThresholdR",
+  subdir = "optithresholdr",
   build_vignettes = TRUE
 )
 ```

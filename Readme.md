@@ -12,7 +12,7 @@ The corresponding R package `OptiThresholdR` can also be downloaded by running t
 install.packages("devtools")
 devtools::install_github(
   "IrinaStatsLab/OptiThresholds",
-  subdir = "OptiThresholdR",
+  subdir = "optithresholdr",
   build_vignettes = TRUE
 )
 ```
