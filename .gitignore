@@ -5,6 +5,7 @@ __pycache__/
 .tmp.driveupload/
 .ipynb_checkpoints/
 .Rhistory
+.github/
 *.pyc
 .idea/
 .idea\
@@ -27,3 +28,4 @@ berg_sense.ipynb
 Code and Data DDA*
 slurm/*
 logs/*
+.Rproj.user
