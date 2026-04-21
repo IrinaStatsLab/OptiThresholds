@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // cutoff_amalgamation_cpp_impl
 NumericMatrix cutoff_amalgamation_cpp_impl(List sorted_data, NumericVector cutoffs, NumericVector grid);
-RcppExport SEXP _optithresholdr_cutoff_amalgamation_cpp_impl(SEXP sorted_dataSEXP, SEXP cutoffsSEXP, SEXP gridSEXP) {
+RcppExport SEXP _OptiThresholdR_cutoff_amalgamation_cpp_impl(SEXP sorted_dataSEXP, SEXP cutoffsSEXP, SEXP gridSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,11 +25,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_optithresholdr_cutoff_amalgamation_cpp_impl", (DL_FUNC) &_optithresholdr_cutoff_amalgamation_cpp_impl, 3},
+    {"_OptiThresholdR_cutoff_amalgamation_cpp_impl", (DL_FUNC) &_OptiThresholdR_cutoff_amalgamation_cpp_impl, 3},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_optithresholdr(DllInfo *dll) {
+RcppExport void R_init_OptiThresholdR(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

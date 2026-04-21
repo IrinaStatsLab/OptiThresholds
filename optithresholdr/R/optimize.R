@@ -2,23 +2,42 @@
 
 #' Optimize Data-Driven Thresholds
 #'
-#' @param x An `optithreshold_distribution`.
-#' @param K Number of free thresholds to optimize.
-#' @param loss Loss function, `"loss1"` or `"loss2"`.
-#' @param wdist Wasserstein base distance, `"W2"` or `"W1"`.
-#' @param fixed Optional fixed thresholds that remain in the final threshold
-#'   set.
+#' Find `K` thresholds that minimize the chosen loss function over the
+#' measurement range, using differential evolution (DE). The returned
+#' cutoffs define `K + 1` bins for time-in-range summaries.
+#'
+#' @param x An `optithreshold_distribution` created by `as_distribution()`.
+#' @param K Number of free (optimized) thresholds. Together with the range
+#'   endpoints, `K` thresholds define `K + 1` time-in-range bins. For example,
+#'   `K = 4` produces the same granularity as the standard CGM consensus
+#'   thresholds (54, 70, 181, 251 mg/dL).
+#' @param loss Loss function to minimize. `"loss1"` (distribution
+#'   preservation) is best for summarizing a single cohort; `"loss2"` (distance
+#'   preservation) is best for mixed-population data where between-group
+#'   separation matters. See `evaluate_loss()` for details.
+#' @param wdist Wasserstein distance order: `"W2"` (default) or `"W1"`. `W1`
+#'   is more robust to subjects with extreme measurements.
+#' @param fixed Optional numeric vector of fixed thresholds that are kept in
+#'   the final set (semi-supervised mode). For example, `fixed = c(70, 181)`
+#'   keeps the standard CGM range while optimizing `K` additional cutoffs
+#'   around it. `K` refers only to the number of *free* thresholds.
 #' @param seed Optional random seed for reproducibility. If supplied,
 #'   `set.seed(seed)` is called immediately before optimization.
 #' @param control A named list passed to `DEoptim::DEoptim.control()`. Package
 #'   defaults are `NP = max(4, 15 * K)`, `itermax = 1000`, `CR = 0.7`,
 #'   `F = 0.75`, `strategy = 3`, `reltol = 1e-4`, `steptol = 30`,
-#'   `bs = FALSE`, `trace = FALSE`, and `parallelType = "none"`. If
-#'   `initialpop` is supplied, its row count becomes the effective `NP`.
+#'   `bs = FALSE`, `trace = FALSE`, and `parallelType = "none"`. Reduce
+#'   `itermax` for quick exploration. If `initialpop` is supplied, its row
+#'   count becomes the effective `NP`.
 #'
-#' @return An S3 `optithreshold_fit` object containing the optimized cutoffs,
-#'   the achieved objective value, the selected loss and Wasserstein distance,
-#'   and runtime.
+#' @return An S3 `optithreshold_fit` object with components:
+#'   \describe{
+#'     \item{cutoffs}{Numeric vector of all thresholds (free + fixed), sorted.}
+#'     \item{objective}{The achieved loss value (lower is better).}
+#'     \item{loss}{The loss function used.}
+#'     \item{wdist}{The Wasserstein distance used.}
+#'     \item{elapsed}{Elapsed optimization time in seconds.}
+#'   }
 #' @export
 optimal_thresholds <- function(x, K, loss = c("loss1", "loss2"),
                                wdist = c("W2", "W1"), fixed = NULL,

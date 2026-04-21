@@ -57,4 +57,4 @@ fixture_losses <- list(
   loss2_w1_fixed = 0.21226666666666652
 )
 
-fixture_cutoff_amalgamation <- getFromNamespace(".cutoff_amalgamation", "optithresholdr")
+fixture_cutoff_amalgamation <- getFromNamespace(".cutoff_amalgamation", "OptiThresholdR")

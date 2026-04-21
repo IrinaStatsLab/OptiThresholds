@@ -2,14 +2,24 @@
 
 #' Evaluate A Threshold Loss
 #'
-#' @param distribution An `optithreshold_distribution`.
-#' @param cutoffs Numeric vector of free cutoffs to evaluate.
-#' @param loss Loss function, `"loss1"` or `"loss2"`. `loss1` averages
-#'   subject-level discrepancies, while `loss2` compares pairwise subject
-#'   distance structure before and after amalgamation.
-#' @param wdist Wasserstein base distance, `"W2"` or `"W1"`.
-#' @param fixed Optional fixed thresholds merged with `cutoffs` before the loss
-#'   is computed.
+#' Compute the loss value for a given set of candidate cutoffs. This is the
+#' same objective function minimized by `optimal_thresholds()`.
+#'
+#' @param distribution An `optithreshold_distribution` created by
+#'   `as_distribution()`.
+#' @param cutoffs Numeric vector of candidate thresholds to evaluate. These
+#'   must lie within the measurement `range` of the distribution.
+#' @param loss Loss function to use. `"loss1"` (distribution preservation)
+#'   measures how well each subject's original distribution is approximated by
+#'   its TIR summary. `"loss2"` (distance preservation) measures how well
+#'   pairwise subject distances are maintained after thresholding; requires
+#'   at least 2 subjects.
+#' @param wdist Wasserstein distance order: `"W2"` (default, squared Euclidean
+#'   transport cost) or `"W1"` (absolute transport cost, more robust to
+#'   subjects with extreme measurements).
+#' @param fixed Optional numeric vector of fixed thresholds that are merged
+#'   with `cutoffs` before the loss is computed (for semi-supervised
+#'   evaluation).
 #'
 #' @return A scalar loss value.
 #' @export

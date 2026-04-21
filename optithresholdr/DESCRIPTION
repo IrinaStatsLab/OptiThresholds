@@ -1,20 +1,20 @@
-Package: optithresholdr
+Package: OptiThresholdR
 Title: Data-Driven Thresholds for Wearable Time-in-Range Summaries
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: c(
     person("Junyoung", "Park", email = "junyoup@umich.edu", role = c("aut", "cre")),
-    person("Neo", "Kok", email = "irinagn@umich.edu", role = "aut"),
+    person("Neo", "Kok", email = "neokok@umich.edu", role = "aut"),
     person("Irina", "Gaynanova", email = "irinagn@umich.edu", role = "aut"),
     person("Farhad", "De Sousa", email = "fdesousa@usc.edu", role = "ctb"))
 Author: Junyoung Park [aut, cre], Neo Kok [aut], Irina Gaynanova [aut], Farhad De Sousa [ctb]
 Maintainer: Junyoung Park <junyoup@umich.edu>
-Description: Implements mathematically grounded threshold selection for
-    time-in-range summaries of repeated wearable measurements such as
-    continuous glucose monitor data. The package uses the full measurement
+Description: Implements threshold selection for time-in-range summaries of
+    real-time wearable measurements such as actigraphy or continuous 
+    glucose monitor data. The package uses the full measurement
     profiles across subjects to estimate cutoffs that optimally preserve
     distributional information in the resulting summaries, using
-    Wasserstein-based loss functions and differential evolution.
-License: file LICENSE
+    Wasserstein distance-based loss functions and differential evolution.
+License: GPL (>= 3)
 URL: https://github.com/pjywang/OptiThresholds
 BugReports: https://github.com/pjywang/OptiThresholds/issues
 Depends:

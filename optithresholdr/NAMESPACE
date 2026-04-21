@@ -1,4 +1,4 @@
-useDynLib(optithresholdr, .registration = TRUE)
+useDynLib(OptiThresholdR, .registration = TRUE)
 importFrom(Rcpp,evalCpp)
 S3method(print,optithreshold_distribution)
 S3method(print,optithreshold_fit)

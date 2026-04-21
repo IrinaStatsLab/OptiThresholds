@@ -1,51 +1,121 @@
-# optithresholdr
 
-[![R-CMD-check](https://github.com/pjywang/OptiThresholds/actions/workflows/optithresholdr-check.yaml/badge.svg)](https://github.com/pjywang/OptiThresholds/actions/workflows/optithresholdr-check.yaml)
+<!-- README.md is generated from README.Rmd. Edit README.Rmd instead. -->
 
-`optithresholdr` estimates data-driven thresholds for time-in-range summaries
-of repeated wearable measurements. The main use case is clinical or
-observational studies where each participant contributes many measurements, such
-as CGM readings, and the goal is to turn those measurements into interpretable
-time below, within, and above threshold summaries without relying only on
-conventional fixed cutoffs.
+# OptiThresholdR
 
-More specifically, the package chooses thresholds so that the resulting
-time-in-range summaries optimally preserve distributional information from the
-original repeated measurements.
+[![R-CMD-check](https://github.com/pjywang/OptiThresholds/actions/workflows/OptiThresholdR-check.yaml/badge.svg)](https://github.com/pjywang/OptiThresholds/actions/workflows/OptiThresholdR-check.yaml)
+
+`OptiThresholdR` estimates data-driven thresholds for time-in-range
+(TIR) summaries of wearable device data. Instead of relying solely on
+pre-fixed cutoffs (e.g., 70 and 180 mg/dL for CGM), it finds thresholds
+that optimally preserve distributional information from the original
+measurement profiles.
 
 The methodology is described in:
 
 - Junyoung Park, Neo Kok, and Irina Gaynanova. [Beyond fixed thresholds:
-  optimizing summaries of wearable device data via piecewise linearization of
-  quantile functions](https://arxiv.org/abs/2501.11777).
+  optimizing summaries of wearable device data via piecewise
+  linearization of quantile
+  functions](https://arxiv.org/abs/2501.11777).
+
+We thank [Farhad De Sousa](https://www.farhaddesousa.com/) for his
+initial contribution to the development of this package.
 
 ## Installation
 
-```r
-install.packages("remotes")
-remotes::install_github(
-  "IrinaStatsLab/OptiThresholds",
-  subdir = "optithresholdr",
+``` r
+install.packages("devtools")
+devtools::install_github(
+  "pjywang/OptiThresholds",
+  subdir = "OptiThresholdR",
   build_vignettes = TRUE
 )
 ```
 
+## What This Package Does
+
+Given a dataset of subjects, each with measurements from a wearable
+device, `OptiThresholdR`:
+
+1.  Converts subject-level measurements into an internal distribution
+    object.
+2.  Finds K thresholds that partition the measurement range into K + 1
+    bins (i.e., time-in-range proportions), chosen to optimally
+    approximate the full empirical distributions.
+
+The resulting TIR summaries are interpretable scalars — just like
+conventional fixed-threshold summaries — but capture substantially more
+of the distributional signal in the data.
+
+## What Data You Need
+
+The package works with any **univariate wearable device data**,
+including wearable devices such as accelerometers or continuous glucose
+monitors (CGMs). Each subject should have a vector of real-time repeated
+measurements. The method does not use Timestamps; only the measurement
+values matter.
+
+Input can be:
+
+- A **named list** of numeric vectors (one per subject).
+- A **long-format data frame** with a subject ID column and a
+  measurement value column.
+
+## Core Functions
+
+| Function | Purpose |
+|----|----|
+| `as_distribution()` | Preprocess subject-level measurements into the internal distribution object |
+| `optimal_thresholds()` | Estimate data-driven thresholds via differential evolution |
+
+## Quick Example
+
+``` r
+library(OptiThresholdR)
+
+subjects <- list(
+  s1 = c(90, 110, 130, 150, 180),
+  s2 = c(75, 82, 95, 105, 125, 160),
+  s3 = c(60, 70, 88, 92, 115, 140)
+)
+
+# Step 1: create distribution object
+dist <- as_distribution(subjects, range = c(40, 400))
+
+# Step 2: find 2 optimal thresholds
+fit <- optimal_thresholds(dist, K = 2, loss = "loss1", seed = 1)
+fit$cutoffs    # optimal thresholds
+fit$objective  # achieved loss value
+```
+
+## Two Loss Functions
+
+The package provides two loss functions that answer different questions:
+
+- **`loss1`** (distribution preservation): minimizes the average
+  discrepancy between each subject’s original distribution and its TIR
+  summary. Best for summarizing a single cohort.
+- **`loss2`** (distance preservation): minimizes the discrepancy in
+  pairwise subject distances before and after thresholding. Best for
+  mixed-population data where between-group separation matters.
+
+## Semi-Supervised Mode
+
+When some cutoffs are clinically mandated (e.g., 70 and 181 mg/dL for
+CGM), use the `fixed` argument to keep them while optimizing additional
+thresholds:
+
+``` r
+fit <- optimal_thresholds(dist, K = 2, fixed = c(70, 181), loss = "loss1", seed = 1)
+```
+
+Here `K = 2` means two *additional* free thresholds are optimized; the
+fixed cutoffs are always included in the final set.
+
 ## Getting Started
 
-For a worked introduction to the package workflow, including data preparation,
-loss evaluation, cutoff estimation, and fixed-threshold examples, see:
+For a worked introduction with full examples, see:
 
-```r
-vignette("getting-started", package = "optithresholdr")
+``` r
+vignette("getting-started", package = "OptiThresholdR")
 ```
-
-After installation you can also browse all package vignettes with:
-
-```r
-browseVignettes("optithresholdr")
-```
-
-## Acknowledgements
-
-We thank Farhad De Sousa for providing the initial code structures that greatly accelerated the
-development of this package.

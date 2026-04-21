@@ -12,73 +12,41 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+library(OptiThresholdR)
 ```
 
-`optithresholdr` is designed for studies that use repeated wearable
-measurements and want interpretable time-in-range summaries. A typical example
-is CGM data, where each participant contributes many glucose readings and the
-goal is to choose thresholds in a mathematically grounded way rather than
-relying only on conventional fixed cutoffs.
+## Overview
 
-The central idea is to choose thresholds so that the resulting time-in-range
-summary optimally preserves distributional information from the original
-measurement profiles.
+`OptiThresholdR` finds data-driven thresholds that partition wearable device
+measurements into time-in-range (TIR) proportions. The thresholds are chosen so
+that the resulting TIR summary preserves as much distributional information as
+possible from the original measurement profiles.
 
-The package has three user-facing functions:
+A typical use case is CGM data, where each participant contributes many glucose
+readings and the goal is to choose thresholds in a data-driven way rather than
+relying only on conventional fixed cutoffs (e.g., 54, 70, 181, 251 mg/dL).
+The package applies equally to any univariate distributional data from wearable
+devices, such as accelerometer activity counts.
 
-- `as_distribution()` preprocesses repeated subject-level measurements
-- `evaluate_loss()` scores a candidate cutoff set
-- `optimal_thresholds()` estimates cutoffs with specified `loss1` or `loss2`
+**Note:** time-in-range summaries only use measurement values; timestamps are ignored.
 
-The recommended workflow is simple:
+## Workflow
 
-1. Start from a list of subject vectors or a long data frame.
-2. Convert the data with `as_distribution()`.
-3. Use `evaluate_loss()` if you want to check a specific cutoff set.
-4. Use `optimal_thresholds()` if you want the package to estimate the cutoffs.
+The package has two main user-facing functions:
 
-The package uses the full measurement profiles across participants when fitting
-thresholds, aiming to maximally preserve distributional information.
+1. `as_distribution()` — preprocess subject-level measurements.
+2. `optimal_thresholds()` — estimate data-driven thresholds.
 
-`loss1` and `loss2` answer different questions. Use `loss1` when you want 
-the resulting time-in-range summaries to stay close to each participant's
-original measurement profile. Use `loss2` when you want the thresholded
-summaries to preserve between-participant differences, which is often useful in
-mixed or heterogeneous cohorts.
+## Step 1: Create a Distribution Object
 
-Missing values are removed before subject distributions are formed, and
-subjects with no observed values left are dropped. For data frames, `id` and
-`value` are supplied as strings.
+`as_distribution()` converts raw measurements into an internal representation
+(quantile functions on a shared grid) used by the optimizer. It accepts either
+a named list of numeric vectors or a long-format data frame.
 
-## Data Frame Input
-
-If your data are stored in long format, pass the participant and measurement
-columns as strings.
+### List input
 
 ```{r}
-df <- data.frame(
-  person = rep(c("A", "B", "C"), c(5, 6, 6)),
-  reading = c(90, 110, 130, 150, 180,
-              75, 82, 95, 105, 125, 160,
-              60, 70, 88, 92, 115, 140)
-)
-
-distribution_df <- as_distribution(
-  df,
-  id = "person",
-  value = "reading",
-  range = c(40, 400),
-  M = 200
-)
-```
-
-Once the distribution object is created, the downstream workflow is the same as
-for list input.
-
-## A Small Example
-
-```{r}
-library(optithresholdr)
+library(OptiThresholdR)
 
 subjects <- list(
   subject_1 = c(90, 110, 130, 150, 180),
@@ -91,14 +59,43 @@ distribution <- as_distribution(subjects, range = c(40, 400), M = 200)
 distribution
 ```
 
-`as_distribution()` creates the internal object used by the loss and
-optimization functions. In practice, this is the preprocessing step you run
-once before scoring or estimating thresholds.
+### Data frame input
 
-## Estimating Thresholds
+If your data are in data.frame format, pass the subject ID and measurement columns
+as strings:
 
-To estimate thresholds, choose the number of free thresholds `K` and the loss. The
-returned cutoffs optimize the associated time-in-range summaries.
+```{r}
+df <- data.frame(
+  id = rep(c("A", "B", "C"), c(5, 6, 6)),
+  gl = c(90, 110, 130, 150, 180,
+              75, 82, 95, 105, 125, 160,
+              60, 70, 88, 92, 115, 140)
+)
+
+distribution_df <- as_distribution(
+  df,
+  id = "id",
+  value = "gl",
+  range = c(40, 400),
+  M = 200
+)
+```
+
+### Key parameters
+
+- **`range`**: the physical measurement range of the device, e.g., `c(40, 400)`
+  for a CGM that records 40–400 mg/dL. If `NULL`, the range is set to the
+  observed data range (with a small buffer).
+- **`M`**: number of interior grid points to approximate the quantile function. The
+  default `M = 200` works well in practice; larger values give finer
+  approximations at modest extra cost.
+
+The function `as_distribution` drops missing values automatically and removes subjects with no remaining observations.
+
+## Step 2: Estimate Thresholds
+
+`optimal_thresholds()` searches for `K` thresholds that minimize the chosen
+loss function over the measurement range, using differential evolution (DE).
 
 ```{r}
 fit_loss1 <- optimal_thresholds(
@@ -108,39 +105,75 @@ fit_loss1 <- optimal_thresholds(
   seed = 123
 )
 
+fit_loss1
+```
+
+### Choosing `K`
+
+`K` is the number of interior thresholds, which partitions the measurement
+range into `K + 1` bins. For example, `K = 4` yields 5 TIR proportions, the
+same granularity as the standard CGM consensus thresholds (54, 70, 181, 251
+mg/dL). Smaller `K` gives coarser but often more interpretable summaries.
+
+### Choosing a loss function
+
+The `loss` argument selects the optimality criterion:
+
+- **`"loss1"`** (distribution preservation): minimizes the average Wasserstein
+  distance between each subject's original distribution and its TIR summary.
+  Well-suited for characterizing a single, relatively homogeneous cohort.
+- **`"loss2"`** (distance preservation): minimizes the discrepancy in pairwise
+  subject distances before and after thresholding. Well-suited for
+  mixed-population settings where between-group separation matters (e.g.,
+  classification or clustering). Requires at least 2 subjects.
+
+```{r}
 fit_loss2 <- optimal_thresholds(
   distribution,
   K = 2,
   loss = "loss2",
   seed = 123,
-  control = list(NP = 30, itermax = 100, trace = FALSE)   # DEOptim parameters can be specified
+  control = list(NP = 30, itermax = 100, trace = FALSE)   # DEOptim parameters
 )
 
-fit_loss1
 fit_loss2
 ```
 
-An `optithreshold_fit` object contains:
 
-- `cutoffs`: the fitted interior thresholds
-- `objective`: the achieved loss value
-- `loss`: the loss definition used for fitting
-- `wdist`: the base Wasserstein distance used inside the loss
-- `elapsed`: elapsed optimization time in seconds
+### Interpreting the output
 
-The printed summary is intentionally short, so the main quantities to inspect
-are usually `fit$cutoffs` and `fit$objective`.
+The output object class contains:
+- `cutoffs`: the estimated interior thresholds.
+- `objective`: the achieved loss value (lower is better).
+- `loss` / `wdist`: the loss and distance used for fitting.
+- `elapsed`: elapsed optimization time in seconds.
 
-## Fixed Thresholds (semisupervised)
+The returned `cutoffs` define `K + 1` bins over the measurement range. Each
+subject's TIR summary is the vector of proportions of their measurements
+falling within each bin. A lower `objective` means the TIR summary more
+faithfully represents the original distributions.
 
-Sometimes part of the threshold set is fixed by study convention and you only
-want to estimate the remaining cutoffs. Use the `fixed` argument for that case.
+### Solver control
+
+The `control` argument is passed to `DEoptim::DEoptim.control()`. Package
+defaults are `NP = max(4, 15 * K)`, `itermax = 1000`, `CR = 0.7`,
+`F = 0.75`, `strategy = 3`, `reltol = 1e-4`, `steptol = 30`, `trace = FALSE`.
+For quick exploration, reduce `itermax`; for production runs, the defaults
+usually suffice. If you supply `control$initialpop`, its row count becomes
+the effective `NP`.
+
+## Semi-Supervised Thresholds
+
+In some applications, certain cutoffs are fixed by domain knowledge (e.g.,
+70 and 181 mg/dL define the standard CGM time-in-range). The `fixed` argument
+keeps those cutoffs in the final set while optimizing `K` additional thresholds
+around them.
 
 ```{r}
 fit <- optimal_thresholds(
   distribution,
-  K = 1,        # additional thresholds to optimize
-  fixed = 70,
+  K = 1,        # one additional threshold to optimize
+  fixed = 70,   # this cutoff stays in the final threshold set
   loss = "loss1",
   seed = 1,
   control = list(NP = 20, itermax = 50, trace = FALSE)
@@ -149,21 +182,5 @@ fit <- optimal_thresholds(
 fit
 ```
 
-Here `K = 1` means that one additional cutoff is optimized while `70` is kept
-fixed in the final set.
-
-## Real CGM data example with iglu
-
-
-
-
-## Solver Notes
-
-The optimizer uses `DEoptim` together with some parts of loss evaluation
-accelerated with Rcpp.
-
-The `control` argument is passed through to `DEoptim::DEoptim.control()`. The
-package defaults are `NP = max(4, 15 * K)`, `itermax = 1000`, `CR = 0.7`,
-`F = 0.75`, `strategy = 3`, `reltol = 1e-4`, `steptol = 30`, `bs = FALSE`,
-`trace = FALSE`, and `parallelType = "none"`. If you supply
-`control$initialpop`, its row count becomes the effective `NP`.
+Here, `K = 1` means one free threshold is optimized while `70` is kept fixed.
+The returned `cutoffs` contain both the fixed and optimized values, sorted.

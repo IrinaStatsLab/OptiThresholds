@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 cutoff_amalgamation_cpp_impl <- function(sorted_data, cutoffs, grid) {
-    .Call(`_optithresholdr_cutoff_amalgamation_cpp_impl`, sorted_data, cutoffs, grid)
+    .Call(`_OptiThresholdR_cutoff_amalgamation_cpp_impl`, sorted_data, cutoffs, grid)
 }
 

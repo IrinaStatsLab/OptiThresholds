@@ -1,4 +1,4 @@
 library(testthat)
-library(optithresholdr)
+library(OptiThresholdR)
 
-test_check("optithresholdr")
+test_check("OptiThresholdR")

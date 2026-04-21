@@ -1,16 +1,25 @@
 #' Create A Distribution Object
 #'
-#' @param x A list of numeric vectors, a data frame, or an existing
-#'   `optithreshold_distribution`.
-#' @param id Optional subject column when `x` is a data frame. If omitted, the
-#'   package uses a column named `id`. If supplied, it must be a string.
-#' @param value Optional measurement column when `x` is a data frame. If
-#'   omitted, the package uses a column named `gl`. If supplied, it must be a
-#'   string.
-#' @param range Optional measurement range. If `NULL`, the observed range is
-#'   expanded by a small symmetric buffer.
-#' @param M Number of interior quantile grid points. The stored grid has
-#'   `M + 2` points because it includes both endpoints.
+#' Preprocess subject-level measurements into the distribution object used by
+#' the loss and optimization routines. Each subject's measurements are
+#' converted to an empirical quantile function on a shared grid, which is the
+#' internal representation for all downstream computations.
+#'
+#' @param x A list of numeric vectors (one per subject), a long-format data
+#'   frame, or an existing `optithreshold_distribution` (returned as-is).
+#' @param id Column name (string) for subject IDs when `x` is a data frame.
+#'   Defaults to `"id"` if omitted.
+#' @param value Column name (string) for measurement values when `x` is a
+#'   data frame. Defaults to `"gl"` if omitted.
+#' @param range Length-2 numeric vector giving the physical measurement range
+#'   of the device, e.g., `c(40, 400)` for a CGM recording 40--400 mg/dL. If
+#'   `NULL`, the observed data range is used with a small buffer. All
+#'   measurements must fall within this range.
+#' @param M Number of interior quantile grid points used to discretize each
+#'   subject's quantile function (the stored grid has `M + 2` points including
+#'   endpoints). The default `M = 200` gives a good balance of accuracy and
+#'   speed; larger values improve the Wasserstein distance approximation at
+#'   modest extra cost.
 #'
 #' @return An S3 `optithreshold_distribution` object with sorted subject
 #'   measurements and quantiles on a shared grid. It also stores a small

@@ -1,9 +1,9 @@
-\name{optithresholdr-package}
-\alias{optithresholdr-package}
-\alias{optithresholdr}
+\name{OptiThresholdR-package}
+\alias{OptiThresholdR-package}
+\alias{OptiThresholdR}
 \title{Data-Driven Thresholds for Distributional Wearable Data}
 \description{
-The \pkg{optithresholdr} package provides preprocessing and optimization tools
+The \pkg{OptiThresholdR} package provides preprocessing and optimization tools
 for data-driven threshold determination using Wasserstein-based loss functions.
 It supports a simple workflow: preprocess repeated wearable measurements with
 \code{as_distribution()}, score candidate cutoffs with \code{evaluate_loss()},
