@@ -3,7 +3,7 @@
 
 # OptiThresholdR
 
-[![R-CMD-check](https://github.com/pjywang/OptiThresholds/actions/workflows/OptiThresholdR-check.yaml/badge.svg)](https://github.com/pjywang/OptiThresholds/actions/workflows/OptiThresholdR-check.yaml)
+[![R-CMD-check](https://github.com/IrinaStatsLab/OptiThresholds/actions/workflows/OptiThresholdR-check.yaml/badge.svg)](https://github.com/IrinaStatsLab/OptiThresholds/actions/workflows/OptiThresholdR-check.yaml)
 
 `OptiThresholdR` estimates data-driven thresholds for time-in-range
 (TIR) summaries of wearable device data. Instead of relying solely on
@@ -26,7 +26,7 @@ initial contribution to the development of this package.
 ``` r
 install.packages("devtools")
 devtools::install_github(
-  "pjywang/OptiThresholds",
+  "IrinaStatsLab/OptiThresholds",
   subdir = "optithresholdr",
   build_vignettes = TRUE
 )
