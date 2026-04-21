@@ -16,7 +16,7 @@ devtools::install_github(
   build_vignettes = TRUE
 )
 ```
-See [documentation](./OptiThresholdR/README.md) for how to start using the package.
+See [documentation](optithresholdr/README.md) for how to start using the package.
 
 ## Python implementation
 
