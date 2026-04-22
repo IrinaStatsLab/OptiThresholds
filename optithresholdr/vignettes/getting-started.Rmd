@@ -81,7 +81,7 @@ distribution_df <- as_distribution(
 )
 ```
 
-### Key parameters
+### Parameters
 
 - **`range`**: the physical measurement range of the device, e.g., `c(40, 400)`
   for a CGM that records 40–400 mg/dL. If `NULL`, the range is set to the
