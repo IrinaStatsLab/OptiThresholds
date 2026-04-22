@@ -17,6 +17,8 @@ archive*
 
 results/simulation/*.pkl
 results/simulation2/*.pkl
+results/tables/*.tex
+results/screeplot/*.pkl
 data/*.csv
 RT-CGM*
 

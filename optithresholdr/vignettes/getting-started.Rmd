@@ -133,7 +133,7 @@ fit_loss2 <- optimal_thresholds(
   K = 2,
   loss = "loss2",
   seed = 123,
-  control = list(NP = 30, itermax = 100, trace = FALSE)   # DEOptim parameters
+  control = list(NP = 30, itermax = 100, trace = FALSE)   # Custom DEOptim parameters if desired
 )
 
 fit_loss2
@@ -176,7 +176,6 @@ fit <- optimal_thresholds(
   fixed = 70,   # this cutoff stays in the final threshold set
   loss = "loss1",
   seed = 1,
-  control = list(NP = 20, itermax = 50, trace = FALSE)
 )
 
 fit
@@ -184,3 +183,44 @@ fit
 
 Here, `K = 1` means one free threshold is optimized while `70` is kept fixed.
 The returned `cutoffs` contain both the fixed and optimized values, sorted.
+
+## Example with Real CGM Data
+
+The [`iglu`](https://irinagain.github.io/iglu/) package provides several
+publicly available CGM datasets. Here we use `example_data_hall`, which
+contains glucose readings from 5 subjects without diabetes.
+
+```{r, eval = FALSE}
+# install iglu if needed (one-time)
+devtools::install_github("irinagain/iglu")
+```
+
+The dataset `example_data_hall` is in long format with columns including `id` (subject ID)
+and `gl` (glucose in mg/dL). The remaining columns are not used by
+`as_distribution()`.
+
+```{r, eval = requireNamespace("iglu", quietly = TRUE)}
+library(iglu)
+
+data <- example_data_hall
+head(data)
+```
+
+We set `range = c(40, 400)` to match the Dexcom CGM measurement range and
+choose `K = 4` to match the granularity of the standard consensus thresholds
+(54, 70, 181, 251 mg/dL). We use `loss2` to capture heterogeneity across subjects.
+
+```{r, eval = requireNamespace("iglu", quietly = TRUE)}
+distribution_cgm <- as_distribution(data,
+                        id = "id",
+                        value = "gl",
+                        range = c(40, 400),
+                        M = 200)
+
+fit <- optimal_thresholds(distribution_cgm,
+                        K = 4,
+                        loss = "loss2",
+                        seed = 123)
+
+fit
+```
